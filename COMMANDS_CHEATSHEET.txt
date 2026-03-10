@@ -1,0 +1,66 @@
+═══════════════════════════════════════════════════════════════
+  APTITUDEPRO - QUICK COMMANDS CHEATSHEET
+═══════════════════════════════════════════════════════════════
+
+🚀 START PROJECT
+───────────────────────────────────────────────────────────────
+Terminal 1 (Backend):
+  cd Backend && mvn spring-boot:run
+
+Terminal 2 (Frontend):
+  cd frontend && npm start
+
+───────────────────────────────────────────────────────────────
+
+🗄️ DATABASE ACCESS
+───────────────────────────────────────────────────────────────
+Connect to Database:
+  psql -U darshan -d aptitude_db
+
+Quick Queries:
+  psql -U darshan -d aptitude_db -c "SELECT COUNT(*) FROM questions;"
+  psql -U darshan -d aptitude_db -c "SELECT * FROM users;"
+  psql -U darshan -d aptitude_db -c "\dt"
+
+───────────────────────────────────────────────────────────────
+
+🔑 LOGIN CREDENTIALS
+───────────────────────────────────────────────────────────────
+Admin:
+  Username: admin
+  Password: admin123
+
+───────────────────────────────────────────────────────────────
+
+🌐 URLS
+───────────────────────────────────────────────────────────────
+Frontend: http://localhost:3000
+Backend:  http://localhost:8080
+Database: localhost:5432
+
+───────────────────────────────────────────────────────────────
+
+✅ VERIFY SERVICES
+───────────────────────────────────────────────────────────────
+Check Backend:
+  curl http://localhost:8080/api/auth/ping
+
+Check Database:
+  pg_isready
+
+Check Ports:
+  lsof -i :8080
+  lsof -i :3000
+
+───────────────────────────────────────────────────────────────
+
+🔧 TROUBLESHOOTING
+───────────────────────────────────────────────────────────────
+Kill Backend:
+  kill -9 $(lsof -t -i:8080)
+
+Kill Frontend:
+  kill -9 $(lsof -t -i:3000)
+
+───────────────────────────────────────────────────────────────
+
