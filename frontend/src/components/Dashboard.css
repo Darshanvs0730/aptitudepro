@@ -1,0 +1,139 @@
+.dashboard-layout {
+  padding-bottom: 40px;
+}
+
+.dashboard-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overview-card {
+  grid-row: span 1;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.status-badge.success {
+  background-color: rgba(35, 134, 54, 0.2);
+  color: #2ea043;
+}
+
+.overview-stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.overview-stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.overview-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.overview-value.highlight {
+  color: var(--primary);
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.category-row:last-child {
+  border-bottom: none;
+}
+
+.cat-name {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.cat-metric {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diff-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.diff-label {
+  width: 60px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.diff-bar-bg {
+  flex: 1;
+  height: 6px;
+  background-color: #21262d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.diff-bar-fill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 3px;
+}
+
+.diff-val {
+  width: 40px;
+  font-size: 12px;
+  text-align: right;
+  color: var(--text-muted);
+}
