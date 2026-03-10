@@ -75,9 +75,78 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      // Update UI notify the user they can install the PWA
+      setShowInstallButton(true);
+    };
+
+    const handleAppInstalled = () => {
+      console.log('PWA was installed');
+      setShowInstallButton(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      // Show the install prompt
+      deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        // We've used the prompt, and can't use it again, throw it away
+        setDeferredPrompt(null);
+        setShowInstallButton(false);
+      });
+    }
+  };
+
+  const handleDismissClick = () => {
+    setShowInstallButton(false);
+  };
+
   return (
     <ToastProvider>
       <RouterProvider router={router} />
+      {showInstallButton && (
+        <div className="pwa-install-banner">
+          <div className="pwa-banner-content">
+            <img src="/logo192.png" alt="AptitudePro Icon" className="pwa-app-icon" />
+            <div className="pwa-app-info">
+              <h4 className="pwa-app-title">AptitudePro</h4>
+              <p className="pwa-app-desc">Practice aptitude anywhere</p>
+            </div>
+          </div>
+          <div className="pwa-banner-actions">
+            <button onClick={handleDismissClick} className="pwa-btn-dismiss">
+              Not now
+            </button>
+            <button onClick={handleInstallClick} className="pwa-btn-install">
+              Install
+            </button>
+          </div>
+        </div>
+      )}
     </ToastProvider>
   );
 }
