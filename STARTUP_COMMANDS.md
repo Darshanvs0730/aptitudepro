@@ -323,3 +323,5 @@ npm start
 **Good luck with your presentation! 🎉**
 
 python3 generate_questions.py
+
+python3 generate_mass_questions.py

@@ -7,14 +7,13 @@ const Sidebar = ({ logOut, currentUser }) => {
     const isAdmin = currentUser?.roles?.includes("ROLE_ADMIN");
 
     const handleLogOut = (e) => {
-        if (window.isMidQuiz) {
-            const confirmLeave = window.confirm("You have an active quiz! Your progress will be lost. Are you sure you want to log out?");
-            if (!confirmLeave) {
-                e.preventDefault();
-                return;
-            }
+        const message = window.isMidQuiz 
+            ? "You have an active quiz! Your progress will be lost. Are you sure you want to log out?" 
+            : "Are you sure you want to log out?";
+            
+        if (window.confirm(message)) {
+            logOut();
         }
-        logOut();
     };
 
     return (

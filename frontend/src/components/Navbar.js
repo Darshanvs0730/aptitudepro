@@ -23,8 +23,10 @@ const Navbar = ({ currentUser, logOut }) => {
 
   const handleLogout = (e) => {
     e.preventDefault();
-    logOut();
-    navigate('/login');
+    if (window.confirm("Are you sure you want to log out?")) {
+      logOut();
+      navigate('/login');
+    }
   };
 
   const toggleDarkMode = () => {
