@@ -1,13 +1,22 @@
 /* Main App Shell Layout */
 .app-shell {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background-color: var(--bg-body);
 }
 
-.main-content-with-sidebar {
-  margin-left: 280px;
-  /* Width of sidebar */
+.app-header {
+  position: relative;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  background-color: var(--bg-card);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.main-content {
   flex: 1;
   padding: 40px;
   min-height: 100vh;
@@ -29,8 +38,7 @@
     transform: translateX(0);
   }
 
-  .main-content-with-sidebar {
-    margin-left: 0;
+  .main-content {
     padding: 20px;
   }
 }
@@ -132,4 +140,31 @@
     opacity: 1;
     transform: translate(-50%, 0);
   }
+}
+
+/* Global Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  width: 90%;
+  max-width: 450px;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  z-index: 10001;
+  text-align: left;
 }

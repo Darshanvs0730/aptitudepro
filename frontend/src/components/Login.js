@@ -26,7 +26,7 @@ const Login = () => {
     AuthService.login(username, password)
       .then(() => {
         showToast('Login successful!', 'success');
-        navigate('/');
+        navigate('/dashboard');
         setTimeout(() => window.location.reload(), 500);
       })
       .catch((error) => {

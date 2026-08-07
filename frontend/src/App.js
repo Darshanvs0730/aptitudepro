@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
+import { createBrowserRouter, RouterProvider, Outlet, useNavigate } from 'react-router-dom';
+import GooeyNav from './components/GooeyNav';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -10,6 +10,7 @@ import Profile from './components/Profile';
 import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
 import AdminBoard from './components/AdminBoard';
+import Leaderboard from './components/Leaderboard';
 import AuthService from './services/AuthService';
 import ProtectedRoute from './routing/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
@@ -18,6 +19,7 @@ import './App.css';
 function RootLayout() {
   const [currentUser, setCurrentUser] = useState(undefined);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const user = AuthService.getCurrentUser();
@@ -27,19 +29,57 @@ function RootLayout() {
     }
   }, []);
 
-  const logOut = () => {
+  const confirmLogOut = () => {
     AuthService.logout();
     setCurrentUser(undefined);
     setIsAdmin(false);
+    setShowLogoutModal(false);
   };
 
   if (currentUser) {
+    const navItems = [
+      { label: 'Profile', href: '/profile' },
+      { label: 'Quiz', href: '/quiz' },
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Leaderboard', href: '/leaderboard' }
+    ];
+
+    if (isAdmin) {
+      navItems.push({ label: 'Admin', href: '/admin' });
+    }
+    
+    // Custom item for logout
+    navItems.push({ label: 'Logout', href: '#', onClick: () => setShowLogoutModal(true) });
+
     return (
       <div className="app-shell">
-        <Sidebar logOut={logOut} currentUser={currentUser} />
-        <main className="main-content-with-sidebar">
+        <header className="app-header">
+          <GooeyNav 
+            items={navItems} 
+          />
+        </header>
+        <main className="main-content">
           <Outlet context={{ isAdmin }} />
         </main>
+        
+        {showLogoutModal && (
+          <div className="modal-backdrop">
+            <div className="modal-content card animate-fade-in" style={{ textAlign: 'center' }}>
+              <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Sign Out</h3>
+              <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)' }}>
+                Are you sure you want to sign out of your account?
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                <button className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} onClick={() => setShowLogoutModal(false)}>
+                  Cancel
+                </button>
+                <button className="btn" style={{ backgroundColor: 'var(--accent-secondary)', color: 'white' }} onClick={confirmLogOut}>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -67,6 +107,7 @@ const router = createBrowserRouter([
           { path: "profile", element: <Profile /> },
           { path: "quiz", element: <Quiz /> },
           { path: "dashboard", element: <Dashboard /> },
+          { path: "leaderboard", element: <Leaderboard /> },
           { path: "admin", element: <AdminBoard /> }
         ]
       }

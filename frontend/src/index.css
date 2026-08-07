@@ -1,26 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Netlify-inspired Palette */
-  --bg-body: #0e1217;
-  /* Very deep dark */
-  --bg-card: #151a21;
-  /* Slightly lighter for cards */
-  --bg-card-hover: #1c2128;
-  --bg-input: #0d1117;
+  /* Neo-Brutalist Dark Palette */
+  --bg-body: #050505;
+  /* Deepest black */
+  --bg-card: #111111;
+  /* Slightly elevated */
+  --bg-card-hover: #1a1a1a;
+  --bg-input: #0a0a0a;
 
-  --border-color: #30363d;
-  --border-focus: #25c7b7;
+  --border-color: #333333;
+  --border-focus: #B9FF66;
 
   /* Brand Colors */
-  --primary: #25c7b7;
-  /* Netlify Teal */
-  --primary-hover: #20a99c;
-  --accent-purple: #7c3aed;
-  /* For gradients */
-  --text-primary: #ffffff;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
+  --primary: #B9FF66;
+  /* Neon Lime */
+  --primary-hover: #a1e04d;
+  --accent-secondary: #FF2A5F;
+  /* Neon Pink for sharp gradients */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
 
   /* Semantic Colors */
   --error: #da3633;
@@ -43,7 +43,7 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Manrope', sans-serif;
   background-color: var(--bg-body);
   color: var(--text-primary);
   line-height: 1.5;
@@ -62,7 +62,8 @@ h4,
 h5,
 h6 {
   margin: 0;
-  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -152,8 +153,10 @@ p {
 .btn-primary {
   background-color: var(--primary);
   color: #000;
-  /* Dark text on Teal usually readable, or stick to white if Teal is dark enough */
-  font-weight: 600;
+  /* Black text on Neon Lime for aggressive contrast */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-primary:hover {
@@ -196,7 +199,7 @@ p {
 
 /* Utilities */
 .text-gradient {
-  background: linear-gradient(135deg, #25c7b7, #7c3aed);
+  background: linear-gradient(135deg, var(--primary), var(--accent-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -1,0 +1,1819 @@
+<USER_REQUEST>
+Now do the same for "## Integrate the <ScrollExpand /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: ScrollExpand
+### Variant: JavaScript + CSS
+
+
+---
+
+### Usage Example
+```jsx
+import ScrollExpand from './ScrollExpand';
+
+<ScrollExpand
+  src="/hero.jpg"
+  alt="Product hero"
+  title="Built to scale"
+  scrollHint="Scroll"
+  useWindowScroll
+>
+  <h2>Every pixel, everywhere</h2>
+  <p>The frame opens up as you scroll and hands the whole stage to your media.</p>
+</ScrollExpand>
+
+<div style={{ height: '520px' }}>
+  <ScrollExpand src="/hero.jpg" title="Built to scale" mediaZoom={1.35} />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| src | string | '' | Image or video URL shown inside the frame. |
+| mediaType | "image" | "video" | "image" | Whether the source is an image or a looping muted video. |
+| poster | string | '' | Poster frame used while a video loads. |
+| alt | string | '' | Alt text for the image. |
+| title | string | '' | Headline held over the frame that lifts away as the media takes over. |
+| scrollHint | string | '' | Small cue shown under the resting frame that fades away as soon as the scroll begins. |
+| startWidth | number | 42 | Frame width before expanding, as a percentage of the stage. |
+| startHeight | number | 58 | Frame height before expanding, as a percentage of the stage. |
+| startRadius | number | 24 | Corner radius of the resting frame, in px. |
+| endRadius | number | 0 | Corner radius once fully expanded, in px. |
+| mediaZoom | number | 1.35 | How far the media is zoomed in at rest. It eases back to 1 as the frame opens up. |
+| scrollDistance | number | 1.2 | Scroll length of the expansion, in multiples of the stage height. |
+| holdDistance | number | 0.35 | Extra scroll the frame stays pinned at full bleed before releasing. |
+| smoothing | number | 0.1 | Follow time in seconds. 0 locks the frame exactly to the scrollbar. |
+| overlayScrim | number | 0.45 | Strength of the gradient scrim that fades in to keep overlay content readable. |
+| useWindowScroll | boolean | false | Drive the expansion from the page scroll instead of the component’s own scroller. |
+| enabled | boolean | true | Enable or disable the expansion. |
+| children | React.ReactNode | — | Content that fades in over the media once it reaches full bleed. |
+| className | string | '' | Additional class names for the container. |
+| style | object | — | Inline styles for the container. |
+
+### Full Component Source
+```jsx
+import { useCallback, useEffect, useRef } from 'react';
+
+import './ScrollExpand.css';
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+const smoothstep = (edge0, edge1, x) => {
+  const t = clamp((x - edge0) / (edge1 - edge0 || 1e-6), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+const ScrollExpand = ({
+  src = '',
+  mediaType = 'image',
+  poster = '',
+  alt = '',
+  title = '',
+  scrollHint = '',
+  startWidth = 42,
+  startHeight = 58,
+  startRadius = 24,
+  endRadius = 0,
+  mediaZoom = 1.35,
+  scrollDistance = 1.2,
+  holdDistance = 0.35,
+  smoothing = 0.1,
+  overlayScrim = 0.45,
+  useWindowScroll = false,
+  enabled = true,
+  children,
+  className = '',
+  style,
+  ...rest
+}) => {
+  const rootRef = useRef(null);
+  const trackRef = useRef(null);
+  const stageRef = useRef(null);
+  const frameRef = useRef(null);
+  const mediaRef = useRef(null);
+  const titleRef = useRef(null);
+  const overlayRef = useRef(null);
+  const scrimRef = useRef(null);
+  const hintRef = useRef(null);
+
+  const propsRef = useRef({});
+  propsRef.current = {
+    startWidth,
+    startHeight,
+    startRadius,
+    endRadius,
+    mediaZoom,
+    scrollDistance,
+    holdDistance,
+    smoothing,
+    overlayScrim,
+    useWindowScroll,
+    enabled
+  };
+
+  const applyProgress = useCallback(p => {
+    const frame = frameRef.current;
+    const media = mediaRef.current;
+    if (!frame || !media) return;
+    const c = propsRef.current;
+
+    const e = smoothstep(0, 1, p);
+
+    const w = c.startWidth + (100 - c.startWidth) * e;
+    const h = c.startHeight + (100 - c.startHeight) * e;
+    const ix = Math.max(0, (100 - w) / 2);
+    const iy = Math.max(0, (100 - h) / 2);
+    const r = c.startRadius + (c.endRadius - c.startRadius) * e;
+    frame.style.clipPath = `inset(${iy}% ${ix}% ${iy}% ${ix}% round ${r}px)`;
+
+    media.style.transform = `scale(${c.mediaZoom + (1 - c.mediaZoom) * e})`;
+
+    if (scrimRef.current) scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
+
+    if (titleRef.current) {
+      const out = smoothstep(0.4, 0.88, p);
+      titleRef.current.style.opacity = `${1 - out}`;
+      titleRef.current.style.transform = `translate3d(0, ${-28 * out}px, 0) scale(${1 + 0.06 * out})`;
+    }
+
+    if (hintRef.current) {
+      const gone = smoothstep(0, 0.12, p);
+      hintRef.current.style.opacity = `${1 - gone}`;
+      hintRef.current.style.transform = `translate3d(0, ${8 * gone}px, 0)`;
+    }
+
+    if (overlayRef.current) {
+      const inn = smoothstep(0.68, 1, p);
+      overlayRef.current.style.opacity = `${inn}`;
+      overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const track = trackRef.current;
+    const stage = stageRef.current;
+    if (!root || !track || !stage) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let raf = 0;
+    let current = 0;
+    let target = 0;
+    let stageH = 0;
+    let running = false;
+
+    const measure = () => {
+      const c = propsRef.current;
+      stageH = c.useWindowScroll ? window.innerHeight : root.clientHeight;
+      if (stageH <= 0) return;
+      stage.style.height = `${stageH}px`;
+      track.style.height = `${stageH * (1 + Math.max(0, c.scrollDistance) + Math.max(0, c.holdDistance))}px`;
+
+      const w = root.clientWidth || stageH;
+      stage.style.setProperty('--se-title-size', `${clamp(w * 0.075, 20, 84)}px`);
+    };
+
+    const readProgress = () => {
+      const c = propsRef.current;
+      if (!c.enabled) return 1;
+      const span = stageH * Math.max(0.01, c.scrollDistance);
+      if (c.useWindowScroll) {
+        const top = track.getBoundingClientRect().top;
+        return clamp(-top / span, 0, 1);
+      }
+      return clamp(root.scrollTop / span, 0, 1);
+    };
+
+    const tick = () => {
+      const c = propsRef.current;
+      const k = c.smoothing <= 0 ? 1 : 1 - Math.exp(-1 / (60 * c.smoothing));
+      current += (target - current) * k;
+      if (Math.abs(target - current) < 0.0004) {
+        current = target;
+        running = false;
+      }
+      applyProgress(current);
+      raf = running ? requestAnimationFrame(tick) : 0;
+    };
+
+    const kick = () => {
+      if (running) return;
+      running = true;
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    const onScroll = () => {
+      target = readProgress();
+      if (propsRef.current.smoothing <= 0 || reduceMotion) {
+        current = target;
+        applyProgress(current);
+        return;
+      }
+      kick();
+    };
+
+    const onResize = () => {
+      measure();
+      target = readProgress();
+      current = target;
+      applyProgress(current);
+    };
+
+    measure();
+    target = readProgress();
+    current = target;
+    applyProgress(current);
+
+    const scroller = useWindowScroll ? window : root;
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    const ro = new ResizeObserver(onResize);
+    ro.observe(root);
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      scroller.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      ro.disconnect();
+    };
+  }, [applyProgress, useWindowScroll]);
+
+  const media =
+    mediaType === 'video' ? (
+      <video
+        ref={mediaRef}
+        className="scroll-expand__media"
+        src={src}
+        poster={poster}
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+    ) : (
+      <img ref={mediaRef} className="scroll-expand__media" src={src} alt={alt} draggable={false} />
+    );
+
+  return (
+    <div
+      ref={rootRef}
+      className={`scroll-expand ${useWindowScroll ? '' : 'scroll-expand--scroller'} ${className}`.trim()}
+      style={style}
+      {...rest}
+    >
+      <div ref={trackRef} className="scroll-expand__track">
+        <div ref={stageRef} className="scroll-expand__stage">
+          <div ref={frameRef} className="scroll-expand__frame">
+            {media}
+            <div ref={scrimRef} className="scroll-expand__scrim" />
+            {children ? (
+              <div ref={overlayRef} className="scroll-expand__overlay">
+                {children}
+              </div>
+            ) : null}
+          </div>
+          {title ? (
+            <div ref={titleRef} className="scroll-expand__title">
+              {title}
+            </div>
+          ) : null}
+          {scrollHint ? (
+            <div ref={hintRef} className="scroll-expand__hint">
+              {scrollHint}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ScrollExpand;
+
+```
+
+### Component CSS
+```css
+.scroll-expand {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-expand--scroller {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.scroll-expand--scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-expand__track {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand__stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  --se-title-size: 4rem;
+}
+
+.scroll-expand__frame {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(21% 29% 21% 29% round 24px);
+  will-change: clip-path;
+}
+
+.scroll-expand__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+  transform-origin: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scroll-expand__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.1) 45%, rgba(0, 0, 0, 0.35));
+  opacity: 0;
+}
+
+.scroll-expand__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6%;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 6%;
+  text-align: center;
+  font-size: var(--se-title-size);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options."
+
+And also change the whole frontend of the project and use the modern ui ux design and use google stitch for this and avoid generic ai colors and use too unique attracting colors and components... Also Change the whole site and everythng should work...
+
+Here are some components prompts:
+
+- "## Integrate the <ScrollExpand /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: ScrollExpand
+### Variant: JavaScript + CSS
+
+
+---
+
+### Usage Example
+```jsx
+import ScrollExpand from './ScrollExpand';
+
+<ScrollExpand
+  src="/hero.jpg"
+  alt="Product hero"
+  title="Built to scale"
+  scrollHint="Scroll"
+  useWindowScroll
+>
+  <h2>Every pixel, everywhere</h2>
+  <p>The frame opens up as you scroll and hands the whole stage to your media.</p>
+</ScrollExpand>
+
+<div style={{ height: '520px' }}>
+  <ScrollExpand src="/hero.jpg" title="Built to scale" mediaZoom={1.35} />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| src | string | '' | Image or video URL shown inside the frame. |
+| mediaType | "image" | "video" | "image" | Whether the source is an image or a looping muted video. |
+| poster | string | '' | Poster frame used while a video loads. |
+| alt | string | '' | Alt text for the image. |
+| title | string | '' | Headline held over the frame that lifts away as the media takes over. |
+| scrollHint | string | '' | Small cue shown under the resting frame that fades away as soon as the scroll begins. |
+| startWidth | number | 42 | Frame width before expanding, as a percentage of the stage. |
+| startHeight | number | 58 | Frame height before expanding, as a percentage of the stage. |
+| startRadius | number | 24 | Corner radius of the resting frame, in px. |
+| endRadius | number | 0 | Corner radius once fully expanded, in px. |
+| mediaZoom | number | 1.35 | How far the media is zoomed in at rest. It eases back to 1 as the frame opens up. |
+| scrollDistance | number | 1.2 | Scroll length of the expansion, in multiples of the stage height. |
+| holdDistance | number | 0.35 | Extra scroll the frame stays pinned at full bleed before releasing. |
+| smoothing | number | 0.1 | Follow time in seconds. 0 locks the frame exactly to the scrollbar. |
+| overlayScrim | number | 0.45 | Strength of the gradient scrim that fades in to keep overlay content readable. |
+| useWindowScroll | boolean | false | Drive the expansion from the page scroll instead of the component’s own scroller. |
+| enabled | boolean | true | Enable or disable the expansion. |
+| children | React.ReactNode | — | Content that fades in over the media once it reaches full bleed. |
+| className | string | '' | Additional class names for the container. |
+| style | object | — | Inline styles for the container. |
+
+### Full Component Source
+```jsx
+import { useCallback, useEffect, useRef } from 'react';
+
+import './ScrollExpand.css';
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+const smoothstep = (edge0, edge1, x) => {
+  const t = clamp((x - edge0) / (edge1 - edge0 || 1e-6), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+const ScrollExpand = ({
+  src = '',
+  mediaType = 'image',
+  poster = '',
+  alt = '',
+  title = '',
+  scrollHint = '',
+  startWidth = 42,
+  startHeight = 58,
+  startRadius = 24,
+  endRadius = 0,
+  mediaZoom = 1.35,
+  scrollDistance = 1.2,
+  holdDistance = 0.35,
+  smoothing = 0.1,
+  overlayScrim = 0.45,
+  useWindowScroll = false,
+  enabled = true,
+  children,
+  className = '',
+  style,
+  ...rest
+}) => {
+  const rootRef = useRef(null);
+  const trackRef = useRef(null);
+  const stageRef = useRef(null);
+  const frameRef = useRef(null);
+  const mediaRef = useRef(null);
+  const titleRef = useRef(null);
+  const overlayRef = useRef(null);
+  const scrimRef = useRef(null);
+  const hintRef = useRef(null);
+
+  const propsRef = useRef({});
+  propsRef.current = {
+    startWidth,
+    startHeight,
+    startRadius,
+    endRadius,
+    mediaZoom,
+    scrollDistance,
+    holdDistance,
+    smoothing,
+    overlayScrim,
+    useWindowScroll,
+    enabled
+  };
+
+  const applyProgress = useCallback(p => {
+    const frame = frameRef.current;
+    const media = mediaRef.current;
+    if (!frame || !media) return;
+    const c = propsRef.current;
+
+    const e = smoothstep(0, 1, p);
+
+    const w = c.startWidth + (100 - c.startWidth) * e;
+    const h = c.startHeight + (100 - c.startHeight) * e;
+    const ix = Math.max(0, (100 - w) / 2);
+    const iy = Math.max(0, (100 - h) / 2);
+    const r = c.startRadius + (c.endRadius - c.startRadius) * e;
+    frame.style.clipPath = `inset(${iy}% ${ix}% ${iy}% ${ix}% round ${r}px)`;
+
+    media.style.transform = `scale(${c.mediaZoom + (1 - c.mediaZoom) * e})`;
+
+    if (scrimRef.current) scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
+
+    if (titleRef.current) {
+      const out = smoothstep(0.4, 0.88, p);
+      titleRef.current.style.opacity = `${1 - out}`;
+      titleRef.current.style.transform = `translate3d(0, ${-28 * out}px, 0) scale(${1 + 0.06 * out})`;
+    }
+
+    if (hintRef.current) {
+      const gone = smoothstep(0, 0.12, p);
+      hintRef.current.style.opacity = `${1 - gone}`;
+      hintRef.current.style.transform = `translate3d(0, ${8 * gone}px, 0)`;
+    }
+
+    if (overlayRef.current) {
+      const inn = smoothstep(0.68, 1, p);
+      overlayRef.current.style.opacity = `${inn}`;
+      overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const track = trackRef.current;
+    const stage = stageRef.current;
+    if (!root || !track || !stage) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let raf = 0;
+    let current = 0;
+    let target = 0;
+    let stageH = 0;
+    let running = false;
+
+    const measure = () => {
+      const c = propsRef.current;
+      stageH = c.useWindowScroll ? window.innerHeight : root.clientHeight;
+      if (stageH <= 0) return;
+      stage.style.height = `${stageH}px`;
+      track.style.height = `${stageH * (1 + Math.max(0, c.scrollDistance) + Math.max(0, c.holdDistance))}px`;
+
+      const w = root.clientWidth || stageH;
+      stage.style.setProperty('--se-title-size', `${clamp(w * 0.075, 20, 84)}px`);
+    };
+
+    const readProgress = () => {
+      const c = propsRef.current;
+      if (!c.enabled) return 1;
+      const span = stageH * Math.max(0.01, c.scrollDistance);
+      if (c.useWindowScroll) {
+        const top = track.getBoundingClientRect().top;
+        return clamp(-top / span, 0, 1);
+      }
+      return clamp(root.scrollTop / span, 0, 1);
+    };
+
+    const tick = () => {
+      const c = propsRef.current;
+      const k = c.smoothing <= 0 ? 1 : 1 - Math.exp(-1 / (60 * c.smoothing));
+      current += (target - current) * k;
+      if (Math.abs(target - current) < 0.0004) {
+        current = target;
+        running = false;
+      }
+      applyProgress(current);
+      raf = running ? requestAnimationFrame(tick) : 0;
+    };
+
+    const kick = () => {
+      if (running) return;
+      running = true;
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    const onScroll = () => {
+      target = readProgress();
+      if (propsRef.current.smoothing <= 0 || reduceMotion) {
+        current = target;
+        applyProgress(current);
+        return;
+      }
+      kick();
+    };
+
+    const onResize = () => {
+      measure();
+      target = readProgress();
+      current = target;
+      applyProgress(current);
+    };
+
+    measure();
+    target = readProgress();
+    current = target;
+    applyProgress(current);
+
+    const scroller = useWindowScroll ? window : root;
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    const ro = new ResizeObserver(onResize);
+    ro.observe(root);
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      scroller.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      ro.disconnect();
+    };
+  }, [applyProgress, useWindowScroll]);
+
+  const media =
+    mediaType === 'video' ? (
+      <video
+        ref={mediaRef}
+        className="scroll-expand__media"
+        src={src}
+        poster={poster}
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+    ) : (
+      <img ref={mediaRef} className="scroll-expand__media" src={src} alt={alt} draggable={false} />
+    );
+
+  return (
+    <div
+      ref={rootRef}
+      className={`scroll-expand ${useWindowScroll ? '' : 'scroll-expand--scroller'} ${className}`.trim()}
+      style={style}
+      {...rest}
+    >
+      <div ref={trackRef} className="scroll-expand__track">
+        <div ref={stageRef} className="scroll-expand__stage">
+          <div ref={frameRef} className="scroll-expand__frame">
+            {media}
+            <div ref={scrimRef} className="scroll-expand__scrim" />
+            {children ? (
+              <div ref={overlayRef} className="scroll-expand__overlay">
+                {children}
+              </div>
+            ) : null}
+          </div>
+          {title ? (
+            <div ref={titleRef} className="scroll-expand__title">
+              {title}
+            </div>
+          ) : null}
+          {scrollHint ? (
+            <div ref={hintRef} className="scroll-expand__hint">
+              {scrollHint}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ScrollExpand;
+
+```
+
+### Component CSS
+```css
+.scroll-expand {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-expand--scroller {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.scroll-expand--scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-expand__track {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand__stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  --se-title-size: 4rem;
+}
+
+.scroll-expand__frame {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(21% 29% 21% 29% round 24px);
+  will-change: clip-path;
+}
+
+.scroll-expand__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+  transform-origin: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scroll-expand__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.1) 45%, rgba(0, 0, 0, 0.35));
+  opacity: 0;
+}
+
+.scroll-expand__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6%;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 6%;
+  text-align: center;
+  font-size: var(--se-title-size);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options."
+
+
+- "## Integrate the <GooeyNav /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: GooeyNav
+### Variant: JavaScript + CSS
+
+
+---
+
+### Usage Example
+```jsx
+import GooeyNav from './GooeyNav'
+
+// update with your own items
+const items = [
+  { label: "Home", href: "#" },
+  { label: "About", href: "#" },
+  { label: "Contact", href: "#" },
+];
+
+<div style={{ height: '600px', position: 'relative' }}>
+  <GooeyNav
+    items={items}
+    particleCount={15}
+    particleDistances={[90, 10]}
+    particleR={100}
+    initialActiveIndex={0}
+    animationTime={600}
+    timeVariance={300}
+    colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+  />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| items | GooeyNavItem[] | [] | Array of navigation items. |
+| animationTime | number | 600 | Duration (ms) of the main animation. |
+| particleCount | number | 15 | Number of bubble particles per transition. |
+| particleDistances | [number, number] | [90, 10] | Outer and inner distances of bubble spread. |
+| particleR | number | 100 | Radius factor influencing random particle rotation. |
+| timeVariance | number | 300 | Random time variance (ms) for particle animations. |
+| colors | number[] | [1, 2, 3, 1, 2, 3, 1, 4] | Color indices used when creating bubble particles. |
+| initialActiveIndex | number | 0 | Which item is selected on mount. |
+
+### Full Component Source
+```jsx
+import { useRef, useEffect, useState } from 'react';
+import './GooeyNav.css';
+
+const GooeyNav = ({
+  items,
+  animationTime = 600,
+  particleCount = 15,
+  particleDistances = [90, 10],
+  particleR = 100,
+  timeVariance = 300,
+  colors = [1, 2, 3, 1, 2, 3, 1, 4],
+  initialActiveIndex = 0
+}) => {
+  const containerRef = useRef(null);
+  const navRef = useRef(null);
+  const filterRef = useRef(null);
+  const textRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
+
+  const noise = (n = 1) => n / 2 - Math.random() * n;
+
+  const getXY = (distance, pointIndex, totalPoints) => {
+    const angle = ((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
+    return [distance * Math.cos(angle), distance * Math.sin(angle)];
+  };
+
+  const createParticle = (i, t, d, r) => {
+    let rotate = noise(r / 10);
+    return {
+      start: getXY(d[0], particleCount - i, particleCount),
+      end: getXY(d[1] + noise(7), particleCount - i, particleCount),
+      time: t,
+      scale: 1 + noise(0.2),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotate: rotate > 0 ? (rotate + r / 20) * 10 : (rotate - r / 20) * 10
+    };
+  };
+
+  const makeParticles = element => {
+    const d = particleDistances;
+    const r = particleR;
+    const bubbleTime = animationTime * 2 + timeVariance;
+    element.style.setProperty('--time', `${bubbleTime}ms`);
+
+    for (let i = 0; i < particleCount; i++) {
+      const t = animationTime * 2 + noise(timeVariance * 2);
+      const p = createParticle(i, t, d, r);
+      element.classList.remove('active');
+
+      setTimeout(() => {
+        const particle = document.createElement('span');
+        const point = document.createElement('span');
+        particle.classList.add('particle');
+        particle.style.setProperty('--start-x', `${p.start[0]}px`);
+        particle.style.setProperty('--start-y', `${p.start[1]}px`);
+        particle.style.setProperty('--end-x', `${p.end[0]}px`);
+        particle.style.setProperty('--end-y', `${p.end[1]}px`);
+        particle.style.setProperty('--time', `${p.time}ms`);
+        particle.style.setProperty('--scale', `${p.scale}`);
+        particle.style.setProperty('--color', `var(--color-${p.color}, white)`);
+        particle.style.setProperty('--rotate', `${p.rotate}deg`);
+
+        point.classList.add('point');
+        particle.appendChild(point);
+        element.appendChild(particle);
+        requestAnimationFrame(() => {
+          element.classList.add('active');
+        });
+        setTimeout(() => {
+          try {
+            element.removeChild(particle);
+          } catch {
+            // Do nothing
+          }
+        }, t);
+      }, 30);
+    }
+  };
+
+  const updateEffectPosition = element => {
+    if (!containerRef.current || !filterRef.current || !textRef.current) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const pos = element.getBoundingClientRect();
+
+    const styles = {
+      left: `${pos.x - containerRect.x}px`,
+      top: `${pos.y - containerRect.y}px`,
+      width: `${pos.width}px`,
+      height: `${pos.height}px`
+    };
+    Object.assign(filterRef.current.style, styles);
+    Object.assign(textRef.current.style, styles);
+    textRef.current.innerText = element.innerText;
+  };
+
+  const handleClick = (e, index) => {
+    const liEl = e.currentTarget;
+    if (activeIndex === index) return;
+
+    setActiveIndex(index);
+    updateEffectPosition(liEl);
+
+    if (filterRef.current) {
+      const particles = filterRef.current.querySelectorAll('.particle');
+      particles.forEach(p => filterRef.current.removeChild(p));
+    }
+
+    if (textRef.current) {
+      textRef.current.classList.remove('active');
+
+      void textRef.current.offsetWidth;
+      textRef.current.classList.add('active');
+    }
+
+    if (filterRef.current) {
+      makeParticles(filterRef.current);
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const liEl = e.currentTarget.parentElement;
+      if (liEl) {
+        handleClick({ currentTarget: liEl }, index);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!navRef.current || !containerRef.current) return;
+    const activeLi = navRef.current.querySelectorAll('li')[activeIndex];
+    if (activeLi) {
+      updateEffectPosition(activeLi);
+      textRef.current?.classList.add('active');
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      const currentActiveLi = navRef.current?.querySelectorAll('li')[activeIndex];
+      if (currentActiveLi) {
+        updateEffectPosition(currentActiveLi);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, [activeIndex]);
+
+  return (
+    <div className="gooey-nav-container" ref={containerRef}>
+      <nav>
+        <ul ref={navRef}>
+          {items.map((item, index) => (
+            <li key={index} className={activeIndex === index ? 'active' : ''}>
+              <a href={item.href} onClick={e => handleClick(e, index)} onKeyDown={e => handleKeyDown(e, index)}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <span className="effect filter" ref={filterRef} />
+      <span className="effect text" ref={textRef} />
+    </div>
+  );
+};
+
+export default GooeyNav;
+
+```
+
+### Component CSS
+```css
+:root {
+  --linear-ease: linear(
+    0,
+    0.068,
+    0.19 2.7%,
+    0.804 8.1%,
+    1.037,
+    1.199 13.2%,
+    1.245,
+    1.27 15.8%,
+    1.274,
+    1.272 17.4%,
+    1.249 19.1%,
+    0.996 28%,
+    0.949,
+    0.928 33.3%,
+    0.926,
+    0.933 36.8%,
+    1.001 45.6%,
+    1.013,
+    1.019 50.8%,
+    1.018 54.4%,
+    1 63.1%,
+    0.995 68%,
+    1.001 85%,
+    1
+  );
+}
+
+.gooey-nav-container {
+  position: relative;
+}
+
+.gooey-nav-container nav {
+  display: flex;
+  position: relative;
+  transform: translate3d(0, 0, 0.01px);
+}
+
+.gooey-nav-container nav ul {
+  display: flex;
+  gap: 2em;
+  list-style: none;
+  padding: 0 1em;
+  margin: 0;
+  position: relative;
+  z-index: 3;
+  color: white;
+  text-shadow: 0 1px 1px hsl(205deg 30% 10% / 0.2);
+}
+
+.gooey-nav-container nav ul li {
+  border-radius: 100vw;
+  position: relative;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
+  box-shadow: 0 0 0.5px 1.5px transparent;
+  color: white;
+}
+
+.gooey-nav-container nav ul li a {
+  display: inline-block;
+  padding: 0.6em 1em;
+}
+
+.gooey-nav-container nav ul li:focus-within:has(:focus-visible) {
+  box-shadow: 0 0 0.5px 1.5px white;
+}
+
+.gooey-nav-container nav ul li::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: white;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s ease;
+  z-index: -1;
+}
+
+.gooey-nav-container nav ul li.active {
+  color: black;
+  text-shadow: none;
+}
+
+.gooey-nav-container nav ul li.active::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.gooey-nav-container .effect {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 1;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.gooey-nav-container .effect.text {
+  color: white;
+  transition: color 0.3s ease;
+}
+
+.gooey-nav-container .effect.text.active {
+  color: black;
+}
+
+.gooey-nav-container .effect.filter {
+  filter: blur(7px) contrast(100) blur(0);
+  mix-blend-mode: lighten;
+}
+
+.gooey-nav-container .effect.filter::before {
+  content: '';
+  position: absolute;
+  inset: -75px;
+  z-index: -2;
+  background: black;
+}
+
+.gooey-nav-container .effect.filter::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: white;
+  transform: scale(0);
+  opacity: 0;
+  z-index: -1;
+  border-radius: 100vw;
+}
+
+.gooey-nav-container .effect.active::after {
+  animation: pill 0.3s ease both;
+}
+
+@keyframes pill {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.particle,
+.point {
+  display: block;
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 100%;
+  transform-origin: center;
+}
+
+.particle {
+  --time: 5s;
+  position: absolute;
+  top: calc(50% - 8px);
+  left: calc(50% - 8px);
+  animation: particle calc(var(--time)) ease 1 -350ms;
+}
+
+.point {
+  background: var(--color);
+  opacity: 1;
+  animation: point calc(var(--time)) ease 1 -350ms;
+}
+
+@keyframes particle {
+  0% {
+    transform: rotate(0deg) translate(calc(var(--start-x)), calc(var(--start-y)));
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+
+  70% {
+    transform: rotate(calc(var(--rotate) * 0.5)) translate(calc(var(--end-x) * 1.2), calc(var(--end-y) * 1.2));
+    opacity: 1;
+    animation-timing-function: ease;
+  }
+
+  85% {
+    transform: rotate(calc(var(--rotate) * 0.66)) translate(calc(var(--end-x)), calc(var(--end-y)));
+    opacity: 1;
+  }
+
+  100% {
+    transform: rotate(calc(var(--rotate) * 1.2)) translate(calc(var(--end-x) * 0.5), calc(var(--end-y) * 0.5));
+    opacity: 1;
+  }
+}
+
+@keyframes point {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+
+  25% {
+    transform: scale(calc(var(--scale) * 0.25));
+  }
+
+  38% {
+    opacity: 1;
+  }
+
+  65% {
+    transform: scale(var(--scale));
+    opacity: 1;
+    animation-timing-function: ease;
+  }
+
+  85% {
+    transform: scale(var(--scale));
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options."
+
+- "## Integrate the <GlassIcons /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: GlassIcons
+### Variant: JavaScript + CSS
+
+
+---
+
+### Usage Example
+```jsx
+import GlassIcons from './GlassIcons'
+
+// update with your own icons and colors
+const items = [
+  { icon: <FiFileText />, color: 'blue', label: 'Files' },
+  { icon: <FiBook />, color: 'purple', label: 'Books' },
+  { icon: <FiHeart />, color: 'red', label: 'Health' },
+  { icon: <FiCloud />, color: 'indigo', label: 'Weather' },
+  { icon: <FiEdit />, color: 'orange', label: 'Notes' },
+  { icon: <FiBarChart2 />, color: 'green', label: 'Stats' },
+];
+
+<div style={{ height: '600px', position: 'relative' }}>
+  <GlassIcons items={items} className="custom-class"/>
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| items | GlassIconsItem[] | [] | Array of items to render. Each item should include: an icon (React.ReactElement), a color (string), a label (string), and an optional customClass (string). |
+| className | string | '' | Optional additional CSS class(es) to be added to the container. |
+
+### Full Component Source
+```jsx
+import './GlassIcons.css';
+
+const gradientMapping = {
+  blue: 'linear-gradient(hsl(223, 90%, 50%), hsl(208, 90%, 50%))',
+  purple: 'linear-gradient(hsl(283, 90%, 50%), hsl(268, 90%, 50%))',
+  red: 'linear-gradient(hsl(3, 90%, 50%), hsl(348, 90%, 50%))',
+  indigo: 'linear-gradient(hsl(253, 90%, 50%), hsl(238, 90%, 50%))',
+  orange: 'linear-gradient(hsl(43, 90%, 50%), hsl(28, 90%, 50%))',
+  green: 'linear-gradient(hsl(123, 90%, 40%), hsl(108, 90%, 40%))'
+};
+
+const GlassIcons = ({ items, className }) => {
+  const getBackgroundStyle = color => {
+    if (gradientMapping[color]) {
+      return { background: gradientMapping[color] };
+    }
+    return { background: color };
+  };
+
+  return (
+    <div className={`icon-btns ${className || ''}`}>
+      {items.map((item, index) => (
+        <button key={index} className={`icon-btn ${item.customClass || ''}`} aria-label={item.label} type="button">
+          <span className="icon-btn__back" style={getBackgroundStyle(item.color)}></span>
+          <span className="icon-btn__front">
+            <span className="icon-btn__icon" aria-hidden="true">
+              {item.icon}
+            </span>
+          </span>
+          <span className="icon-btn__label">{item.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+export default GlassIcons;
+
+```
+
+### Component CSS
+```css
+.icon-btns {
+  display: grid;
+  grid-gap: 5em;
+  grid-template-columns: repeat(2, 1fr);
+  margin: auto;
+  padding: 3em 0;
+  overflow: visible;
+}
+
+.icon-btn {
+  background-color: transparent;
+  outline: none;
+  position: relative;
+  width: 4.5em;
+  height: 4.5em;
+  perspective: 24em;
+  transform-style: preserve-3d;
+  -webkit-tap-highlight-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.icon-btn__back,
+.icon-btn__front,
+.icon-btn__label {
+  transition:
+    opacity 0.3s cubic-bezier(0.83, 0, 0.17, 1),
+    transform 0.3s cubic-bezier(0.83, 0, 0.17, 1);
+}
+
+.icon-btn__back,
+.icon-btn__front {
+  border-radius: 1.25em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.icon-btn__back {
+  box-shadow: 0.5em -0.5em 0.75em hsla(223, 10%, 10%, 0.15);
+  display: block;
+  transform: rotate(15deg);
+  transform-origin: 100% 100%;
+  will-change: transform;
+}
+
+.icon-btn__front {
+  background-color: hsla(0, 0%, 100%, 0.15);
+  box-shadow: 0 0 0 0.1em hsla(0, 0%, 100%, 0.3) inset;
+  backdrop-filter: blur(0.75em);
+  -webkit-backdrop-filter: blur(0.75em);
+  -moz-backdrop-filter: blur(0.75em);
+  display: flex;
+  transform-origin: 80% 50%;
+  will-change: transform;
+}
+
+.icon-btn__icon {
+  margin: auto;
+  width: 1.5em;
+  height: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn__label {
+  font-size: 1em;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 2;
+  opacity: 0;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  transform: translateY(0);
+}
+
+.icon-btn:focus-visible .icon-btn__back,
+.icon-btn:hover .icon-btn__back {
+  transform: rotate(25deg) translate3d(-0.5em, -0.5em, 0.5em);
+}
+
+.icon-btn:focus-visible .icon-btn__front,
+.icon-btn:hover .icon-btn__front {
+  transform: translate3d(0, 0, 2em);
+}
+
+.icon-btn:focus-visible .icon-btn__label,
+.icon-btn:hover .icon-btn__label {
+  opacity: 1;
+  transform: translateY(20%);
+}
+
+@media (min-width: 768px) {
+  .icon-btns {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options."
+
+- "## Integrate the <FlowingMenu /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: FlowingMenu
+### Variant: JavaScript + CSS
+### Dependencies: gsap
+
+---
+
+### Usage Example
+```jsx
+import FlowingMenu from './FlowingMenu'
+
+const demoItems = [
+  { link: '#', text: 'Mojave', image: 'https://images.unsplash.com/photo-1782977389500-dd7adad33ebe?q=80&w=600&h=400&fit=crop&sat=-100&auto=format' },
+  { link: '#', text: 'Sonoma', image: 'https://images.unsplash.com/photo-1781499455083-6ccc3beb20cd?q=80&w=600&h=400&fit=crop&sat=-100&auto=format' },
+  { link: '#', text: 'Monterey', image: 'https://images.unsplash.com/photo-1776394254711-4a0d7345269a?q=80&w=600&h=400&fit=crop&sat=-100&auto=format' },
+  { link: '#', text: 'Sequoia', image: 'https://images.unsplash.com/photo-1781242629922-6f39cc3671cd?q=80&w=600&h=400&fit=crop&sat=-100&auto=format' }
+];
+
+<div style={{ height: '600px', position: 'relative' }}>
+  <FlowingMenu items={demoItems} />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| items | object[] | [] | An array of objects containing: link, text, image. |
+| speed | number | 15 | Duration of the marquee animation in seconds (lower = faster). |
+| textColor | string | #ffffff | Color of the static menu text. |
+| bgColor | string | #120F17 | Background color of the menu container. |
+| marqueeBgColor | string | #ffffff | Background color of the marquee overlay. |
+| marqueeTextColor | string | #120F17 | Text color inside the marquee. |
+| borderColor | string | #ffffff | Color of the dividing lines between menu items. |
+
+### Full Component Source
+```jsx
+import { useRef, useEffect, useState } from 'react';
+import { gsap } from 'gsap';
+
+import './FlowingMenu.css';
+
+function FlowingMenu({
+  items = [],
+  speed = 15,
+  textColor = '#fff',
+  bgColor = '#120F17',
+  marqueeBgColor = '#fff',
+  marqueeTextColor = '#120F17',
+  borderColor = '#fff'
+}) {
+  return (
+    <div className="menu-wrap" style={{ backgroundColor: bgColor }}>
+      <nav className="menu">
+        {items.map((item, idx) => (
+          <MenuItem
+            key={idx}
+            {...item}
+            speed={speed}
+            textColor={textColor}
+            marqueeBgColor={marqueeBgColor}
+            marqueeTextColor={marqueeTextColor}
+            borderColor={borderColor}
+          />
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+function MenuItem({ link, text, image, speed, textColor, marqueeBgColor, marqueeTextColor, borderColor }) {
+  const itemRef = useRef(null);
+  const marqueeRef = useRef(null);
+  const marqueeInnerRef = useRef(null);
+  const animationRef = useRef(null);
+  const [repetitions, setRepetitions] = useState(4);
+
+  const animationDefaults = { duration: 0.6, ease: 'expo' };
+
+  const findClosestEdge = (mouseX, mouseY, width, height) => {
+    const topEdgeDist = distMetric(mouseX, mouseY, width / 2, 0);
+    const bottomEdgeDist = distMetric(mouseX, mouseY, width / 2, height);
+    return topEdgeDist < bottomEdgeDist ? 'top' : 'bottom';
+  };
+
+  const distMetric = (x, y, x2, y2) => {
+    const xDiff = x - x2;
+    const yDiff = y - y2;
+    return xDiff * xDiff + yDiff * yDiff;
+  };
+
+  useEffect(() => {
+    const calculateRepetitions = () => {
+      if (!marqueeInnerRef.current) return;
+
+      // Get the first marquee part to measure content width
+      const marqueeContent = marqueeInnerRef.current.querySelector('.marquee__part');
+      if (!marqueeContent) return;
+
+      const contentWidth = marqueeContent.offsetWidth;
+      const viewportWidth = window.innerWidth;
+
+      // Calculate how many copies we need to fill viewport + extra for seamless loop
+      // We need at least 2, but calculate based on content vs viewport
+      const needed = Math.ceil(viewportWidth / contentWidth) + 2;
+      setRepetitions(Math.max(4, needed));
+    };
+
+    calculateRepetitions();
+    window.addEventListener('resize', calculateRepetitions);
+    return () => window.removeEventListener('resize', calculateRepetitions);
+  }, [text, image]);
+
+  useEffect(() => {
+    const setupMarquee = () => {
+      if (!marqueeInnerRef.current) return;
+
+      const marqueeContent = marqueeInnerRef.current.querySelector('.marquee__part');
+      if (!marqueeContent) return;
+
+      const contentWidth = marqueeContent.offsetWidth;
+      if (contentWidth === 0) return;
+
+      if (animationRef.current) {
+        animationRef.current.kill();
+      }
+
+      // Animate exactly one content width for seamless loop
+      animationRef.current = gsap.to(marqueeInnerRef.current, {
+        x: -contentWidth,
+        duration: speed,
+        ease: 'none',
+        repeat: -1
+      });
+    };
+
+    // Small delay to ensure DOM is ready after repetitions update
+    const timer = setTimeout(setupMarquee, 50);
+
+    return () => {
+      clearTimeout(timer);
+      if (animationRef.current) {
+        animationRef.current.kill();
+      }
+    };
+  }, [text, image, repetitions, speed]);
+
+  const handleMouseEnter = ev => {
+    if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current) return;
+    const rect = itemRef.current.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    const edge = findClosestEdge(x, y, rect.width, rect.height);
+
+    gsap
+      .timeline({ defaults: animationDefaults })
+      .set(marqueeRef.current, { y: edge === 'top' ? '-101%' : '101%' }, 0)
+      .set(marqueeInnerRef.current, { y: edge === 'top' ? '101%' : '-101%' }, 0)
+      .to([marqueeRef.current, marqueeInnerRef.current], { y: '0%' }, 0);
+  };
+
+  const handleMouseLeave = ev => {
+    if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current) return;
+    const rect = itemRef.current.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    const edge = findClosestEdge(x, y, rect.width, rect.height);
+
+    gsap
+      .timeline({ defaults: animationDefaults })
+      .to(marqueeRef.current, { y: edge === 'top' ? '-101%' : '101%' }, 0)
+      .to(marqueeInnerRef.current, { y: edge === 'top' ? '101%' : '-101%' }, 0);
+  };
+
+  return (
+    <div className="menu__item" ref={itemRef} style={{ borderColor }}>
+      <a
+        className="menu__item-link"
+        href={link}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{ color: textColor }}
+      >
+        {text}
+      </a>
+      <div className="marquee" ref={marqueeRef} style={{ backgroundColor: marqueeBgColor }}>
+        <div className="marquee__inner-wrap">
+          <div className="marquee__inner" ref={marqueeInnerRef} aria-hidden="true">
+            {[...Array(repetitions)].map((_, idx) => (
+              <div className="marquee__part" key={idx} style={{ color: marqueeTextColor }}>
+                <span>{text}</span>
+                <div className="marquee__img" style={{ backgroundImage: `url(${image})` }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default FlowingMenu;
+
+```
+
+### Component CSS
+```css
+.menu-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.menu__item {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  border-top: 1px solid;
+}
+
+.menu__item:first-child {
+  border-top: none;
+}
+
+.menu__item-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 4vh;
+}
+
+.menu__item-link:hover {
+  color: inherit;
+}
+
+.menu__item-link:focus:not(:focus-visible) {
+  color: inherit;
+}
+
+.marquee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: translate3d(0, 101%, 0);
+}
+
+.marquee__inner-wrap {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee__inner {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 100%;
+  width: fit-content;
+  will-change: transform;
+}
+
+.marquee__part {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.marquee span {
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 4vh;
+  line-height: 1;
+  padding: 0 1vw;
+}
+
+.marquee__img {
+  width: 200px;
+  height: 7vh;
+  margin: 2em 2vw;
+  padding: 1em 0;
+  border-radius: 50px;
+  background-size: cover;
+  background-position: 50% 50%;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options."
+
+- "## Integrate the <Lanyard /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: Lanyard
+### Variant: JavaScript + CSS
+### Dependencies: three meshline @react-three/fiber @react-three/drei @react-three/rapier
+
+---
+
+### Usage Example
+```jsx
+import Lanyard from './Lanyard'
+
+<Lanyard position={[0, 0, 20]} gravity={[0, -40, 0]} />
+
+// Pass custom images for the card's front/back faces and/or the lanyard band.
+// frontImage and b
+<truncated 13875 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.

@@ -1,32 +1,30 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthService from '../services/AuthService';
+import SpecularButton from './SpecularButton';
+import Lanyard from './Lanyard';
+import ScrollExpand from './ScrollExpand';
+import GlassIcons from './GlassIcons';
+import FlowingMenu from './FlowingMenu';
+import { FiTarget, FiBarChart2, FiZap, FiAward } from 'react-icons/fi';
 import './Home.css';
 
 const Home = () => {
   const currentUser = AuthService.getCurrentUser();
+  const navigate = useNavigate();
 
-  const features = [
-    {
-      icon: '🎯',
-      title: 'Comprehensive Tests',
-      description: 'Practice with thousands of aptitude questions covering quantitative, logical reasoning, and verbal ability.'
-    },
-    {
-      icon: '📊',
-      title: 'Real-time Analytics',
-      description: 'Track your performance with detailed insights, accuracy rates, and progress over time.'
-    },
-    {
-      icon: '⚡',
-      title: 'Instant Feedback',
-      description: 'Get immediate explanations for every question to understand concepts better.'
-    },
-    {
-      icon: '🎓',
-      title: 'Personalized Learning',
-      description: 'Adaptive difficulty levels and personalized recommendations based on your performance.'
-    }
+  const glassIconItems = [
+    { icon: <FiTarget size={24} />, color: 'blue', label: 'Tests' },
+    { icon: <FiBarChart2 size={24} />, color: 'purple', label: 'Analytics' },
+    { icon: <FiZap size={24} />, color: 'orange', label: 'Feedback' },
+    { icon: <FiAward size={24} />, color: 'green', label: 'Learning' },
+  ];
+
+  const flowingMenuItems = [
+    { link: '#', text: 'Quantitative', image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&h=400&fit=crop' },
+    { link: '#', text: 'Reasoning', image: 'https://images.unsplash.com/photo-1596496181848-3091d4878b24?q=80&w=600&h=400&fit=crop' },
+    { link: '#', text: 'Verbal', image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600&h=400&fit=crop' },
+    { link: '#', text: 'Analytics', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&h=400&fit=crop' }
   ];
 
   const stats = [
@@ -36,38 +34,11 @@ const Home = () => {
     { number: '24/7', label: 'Available' }
   ];
 
-  const howItWorks = [
-    {
-      step: '01',
-      title: 'Sign Up Free',
-      description: 'Create your account in seconds. No credit card required.'
-    },
-    {
-      step: '02',
-      title: 'Take Practice Tests',
-      description: 'Start with our comprehensive question bank covering all topics.'
-    },
-    {
-      step: '03',
-      title: 'Track Progress',
-      description: 'Monitor your performance and identify areas for improvement.'
-    },
-    {
-      step: '04',
-      title: 'Excel & Succeed',
-      description: 'Achieve your goals with continuous practice and detailed insights.'
-    }
-  ];
-
   return (
-    <div className="home-container">
+    <div className="home-container" style={{ background: '#000' }}>
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-background">
-          <div className="hero-gradient animate-pulse"></div>
-          <div className="hero-particles"></div>
-        </div>
-        <div className="hero-content-wrapper">
+      <section className="hero-section" style={{ overflow: 'hidden' }}>
+        <div className="hero-content-wrapper" style={{ zIndex: 10 }}>
           <div className="hero-content animate-slide-up">
             <div className="hero-badge animate-scale-in delay-200">
               <span className="badge-icon">✨</span>
@@ -75,7 +46,7 @@ const Home = () => {
             </div>
             <h1 className="hero-title animate-slide-up delay-300">
               Master Aptitude Tests
-              <span className="gradient-text"> Like Never Before</span>
+              <span className="text-gradient"> Like Never Before</span>
             </h1>
             <p className="hero-description animate-slide-up delay-400">
               Elevate your aptitude skills with our comprehensive practice platform.
@@ -83,148 +54,142 @@ const Home = () => {
             </p>
             <div className="hero-actions animate-slide-up delay-500">
               {currentUser ? (
-                <Link to="/quiz" className="btn btn-primary btn-lg hero-cta hover-glow">
-                  Start Practice Now
-                </Link>
+                <div style={{ display: 'inline-block' }}>
+                  <SpecularButton
+                    size="lg"
+                    radius={8}
+                    tint="#B9FF66"
+                    tintOpacity={0.5}
+                    blur={0}
+                    textColor="#050505"
+                    lineColor="#B9FF66"
+                    baseColor="#B9FF66"
+                    intensity={1.2}
+                    shineSize={12}
+                    shineFade={30}
+                    thickness={1}
+                    speed={0.4}
+                    followMouse
+                    proximity={250}
+                    autoAnimate={false}
+                    onClick={() => navigate('/quiz')}
+                    className="hero-cta neo-button"
+                  >
+                    Start Practice Now
+                  </SpecularButton>
+                </div>
               ) : (
                 <>
-                  <Link to="/register" className="btn btn-primary btn-lg hero-cta hover-glow">
-                    Get Started Free
-                  </Link>
-                  <Link to="/login" className="btn btn-outline btn-lg hero-cta-secondary hover-lift">
-                    Sign In
-                  </Link>
+                  <div style={{ display: 'inline-block', marginRight: '1rem' }}>
+                    <SpecularButton
+                      size="lg"
+                      radius={8}
+                      tint="#B9FF66"
+                      tintOpacity={0.5}
+                      blur={0}
+                      textColor="#050505"
+                      lineColor="#B9FF66"
+                      baseColor="#B9FF66"
+                      intensity={1.2}
+                      shineSize={12}
+                      shineFade={30}
+                      thickness={1}
+                      speed={0.4}
+                      followMouse
+                      proximity={250}
+                      autoAnimate={false}
+                      onClick={() => navigate('/register')}
+                      className="hero-cta neo-button"
+                    >
+                      Get Started Free
+                    </SpecularButton>
+                  </div>
+                  <div style={{ display: 'inline-block' }}>
+                    <SpecularButton
+                      size="lg"
+                      radius={8}
+                      tint="#fff"
+                      tintOpacity={0.1}
+                      blur={0}
+                      textColor="#fff"
+                      lineColor="#666"
+                      baseColor="#111"
+                      intensity={1.2}
+                      shineSize={12}
+                      shineFade={30}
+                      thickness={1}
+                      speed={0.4}
+                      followMouse
+                      proximity={250}
+                      autoAnimate={false}
+                      onClick={() => navigate('/login')}
+                      className="hero-cta-secondary"
+                    >
+                      Sign In
+                    </SpecularButton>
+                  </div>
                 </>
               )}
             </div>
-            <div className="hero-trust animate-fade-in delay-700">
-              <p className="trust-text">No credit card required • Free forever</p>
-            </div>
           </div>
-          <div className="hero-visual animate-float delay-200">
-            <div className="visual-container glass">
-              <div className="gradient-orb orb-1 animate-pulse"></div>
-              <div className="gradient-orb orb-2 animate-pulse delay-500"></div>
-              <div className="gradient-orb orb-3 animate-pulse delay-700"></div>
-
-              <div className="stats-circle animate-scale-in delay-300">
-                <div className="stats-ring">
-                  <svg className="progress-ring" viewBox="0 0 200 200">
-                    <circle
-                      className="progress-ring-circle"
-                      stroke="url(#gradient1)"
-                      strokeWidth="8"
-                      fill="transparent"
-                      r="85"
-                      cx="100"
-                      cy="100"
-                      strokeDasharray="534"
-                      strokeDashoffset="160"
-                    />
-                    <defs>
-                      <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#6366f1" />
-                        <stop offset="100%" stopColor="#8b5cf6" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <div className="stats-content">
-                  <div className="stats-number">95%</div>
-                  <div className="stats-label">Success Rate</div>
-                </div>
-              </div>
-
-              <div className="feature-indicator indicator-1 glass animate-slide-left delay-400">
-                <div className="indicator-dot"></div>
-                <div className="indicator-pulse"></div>
-                <div className="indicator-label">10K+ Questions</div>
-              </div>
-              <div className="feature-indicator indicator-2 glass animate-slide-right delay-500">
-                <div className="indicator-dot"></div>
-                <div className="indicator-pulse"></div>
-                <div className="indicator-label">Real-time Analytics</div>
-              </div>
-              <div className="feature-indicator indicator-3 glass animate-slide-up delay-600">
-                <div className="indicator-dot"></div>
-                <div className="indicator-pulse"></div>
-                <div className="indicator-label">Progress Tracking</div>
-              </div>
-
-              <div className="grid-background"></div>
-            </div>
+          
+          <div className="hero-visual" style={{ position: 'relative', height: '600px', width: '100%', pointerEvents: 'auto' }}>
+             <Lanyard position={[0, 0, 25]} gravity={[0, -40, 0]} userName={currentUser ? currentUser.username : null} />
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="stats-section">
+      {/* Cinematic Reveal of the Live Platform */}
+      <section className="showcase-section" style={{ background: '#000' }}>
+        <ScrollExpand
+          mediaType="image"
+          src="/project-hero.png"
+          scrollHint="Scroll to Explore"
+          useWindowScroll={true}
+          scrollDistance={0.6}
+          holdDistance={0.1}
+        >
+          <h2 style={{ fontSize: '3rem', fontWeight: 'bold', margin: '0 0 1rem', color: 'var(--text-primary)', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>Platform Overview</h2>
+          <p style={{ fontSize: '1.2rem', maxWidth: '600px', color: 'var(--text-secondary)', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+            Experience our intuitive dashboard live. Track your accuracy, analyze your weaknesses, and conquer every section with ease.
+          </p>
+        </ScrollExpand>
+      </section>
+
+      {/* Stats Section with Glass Icons */}
+      <section className="stats-section" style={{ background: '#0a0a0a', padding: '6rem 0' }}>
         <div className="container">
-          <div className="stats-grid">
+          <div className="section-header animate-slide-up" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+             <h2 className="section-title text-gradient" style={{ fontSize: '2.5rem' }}>Interactive Features</h2>
+             <p className="section-description" style={{ color: 'var(--text-secondary)' }}>Experience our glassmorphic interface.</p>
+          </div>
+          <GlassIcons items={glassIconItems} className="custom-glass-icons" />
+          
+          <div className="stats-grid" style={{ marginTop: '5rem' }}>
             {stats.map((stat, index) => (
-              <div key={index} className="stat-item glass hover-lift animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="stat-number gradient-text">{stat.number}</div>
-                <div className="stat-label">{stat.label}</div>
+              <div key={index} className="stat-item glass hover-lift animate-scale-in" style={{ animationDelay: `${index * 0.1}s`, border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
+                <div className="stat-number text-gradient" style={{ fontSize: '3rem', fontFamily: 'Space Grotesk' }}>{stat.number}</div>
+                <div className="stat-label" style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="features-section">
-        <div className="container">
-          <div className="section-header animate-slide-up">
-            <h2 className="section-title">Everything You Need to Succeed</h2>
-            <p className="section-description">
-              Powerful features designed to help you master aptitude tests
-            </p>
-          </div>
-          <div className="features-grid">
-            {features.map((feature, index) => (
-              <div key={index} className="feature-card card glass hover-lift animate-slide-up" style={{ animationDelay: `${index * 0.15}s` }}>
-                <div className="feature-icon-wrapper">
-                  <div className="feature-icon animate-float">{feature.icon}</div>
-                </div>
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-description">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="how-it-works-section">
-        <div className="container">
-          <div className="section-header animate-slide-up">
-            <h2 className="section-title">How It Works</h2>
-            <p className="section-description">
-              Get started in minutes and start improving today
-            </p>
-          </div>
-          <div className="steps-container">
-            {howItWorks.map((step, index) => (
-              <div key={index} className="step-item glass hover-lift animate-slide-right" style={{ animationDelay: `${index * 0.2}s` }}>
-                <div className="step-number gradient-text">{step.step}</div>
-                <div className="step-content">
-                  <h3 className="step-title">{step.title}</h3>
-                  <p className="step-description">{step.description}</p>
-                </div>
-                {index < howItWorks.length - 1 && <div className="step-connector"></div>}
-              </div>
-            ))}
-          </div>
+      {/* Flowing Menu Section */}
+      <section className="topics-section" style={{ padding: '0', background: '#0a0a0a' }}>
+        <div style={{ height: '600px', position: 'relative' }}>
+          <FlowingMenu items={flowingMenuItems} />
         </div>
       </section>
 
       {/* CTA Section */}
       {!currentUser && (
-        <section className="cta-section animate-scale-in delay-200">
+        <section className="cta-section animate-scale-in delay-200" style={{ paddingBottom: '4rem' }}>
           <div className="container">
-            <div className="cta-card glass">
+            <div className="cta-card glass" style={{ border: '2px solid var(--primary)', background: '#111' }}>
               <div className="cta-content">
-                <h2 className="cta-title">Ready to Transform Your Aptitude Skills?</h2>
+                <h2 className="cta-title text-gradient">Ready to Transform Your Aptitude Skills?</h2>
                 <p className="cta-description">
                   Join thousands of learners who are already improving their skills every day.
                 </p>
@@ -236,7 +201,7 @@ const Home = () => {
                     Sign In
                   </Link>
                 </div>
-                <p className="cta-note">No credit card required • Free forever • Cancel anytime</p>
+                <p className="cta-note" style={{ color: 'var(--text-secondary)' }}>No credit card required • Free forever • Cancel anytime</p>
               </div>
             </div>
           </div>

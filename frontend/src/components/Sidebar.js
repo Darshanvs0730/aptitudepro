@@ -30,6 +30,10 @@ const Sidebar = ({ logOut, currentUser }) => {
                         <DashboardIcon />
                         <span>Dashboard</span>
                     </NavLink>
+                    <NavLink to="/leaderboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20"></path><path d="M5 20v-5"></path><path d="M11 20V9"></path><path d="M17 20v-9"></path></svg>
+                        <span>Leaderboard</span>
+                    </NavLink>
                 </div>
 
                 <div className="nav-group">

@@ -14,10 +14,17 @@ const ForgotPassword = () => {
         e.preventDefault();
         setLoading(true);
 
-        AuthService.forgotPassword(email)
+            AuthService.forgotPassword(email)
             .then((response) => {
                 showToast(response.data.message, 'success');
                 setLoading(false);
+                if (response.data.resetLink) {
+                    // DEV MODE SIMULATION: Auto-redirect or alert
+                    setTimeout(() => {
+                        alert("DEV MODE: Redirecting to reset link:\n" + response.data.resetLink);
+                        window.location.href = response.data.resetLink;
+                    }, 1000);
+                }
             })
             .catch((error) => {
                 const resMessage =

@@ -12,10 +12,22 @@ public class EmailService {
     @Autowired
     private JavaMailSender javaMailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String senderEmail;
 
+    @Value("${spring.mail.password:}")
+    private String senderPassword;
+
     public void sendEmail(String to, String subject, String body) {
+        if (senderEmail == null || senderEmail.isEmpty() || senderPassword == null || senderPassword.isEmpty()) {
+            System.out.println("========== SIMULATED EMAIL DELIVERY ==========");
+            System.out.println("To: " + to);
+            System.out.println("Subject: " + subject);
+            System.out.println("Body:\n" + body);
+            System.out.println("=============================================");
+            return;
+        }
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(senderEmail);
         message.setTo(to);

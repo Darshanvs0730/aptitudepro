@@ -71,5 +71,20 @@ public class AttemptHistoryController {
         List<AttemptHistory> attempts = attemptHistoryService.getAttemptsByUserId(user.getId());
         return ResponseEntity.ok(attempts);
     }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<com.example.aptitudepractice.payload.response.LeaderboardEntry>> getLeaderboard(
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(attemptHistoryService.getTopUsers(limit));
+    }
+
+    @GetMapping("/attempts/stats")
+    public ResponseEntity<List<com.example.aptitudepractice.payload.response.CategoryStat>> getCategoryStats() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Error: User not found."));
+
+        return ResponseEntity.ok(attemptHistoryService.getCategoryStats(user.getId()));
+    }
 }
 

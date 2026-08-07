@@ -50,7 +50,8 @@ public class ForgotPasswordController {
 
             emailService.sendEmail(email, "Password Reset Request", message);
             return ResponseEntity.ok(
-                    Map.of("message", "We have sent a reset password link to your email. Please check your inbox."));
+                    Map.of("message", "We have sent a reset password link to your email. Please check your inbox.", 
+                           "resetLink", resetLink));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
