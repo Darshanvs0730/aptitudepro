@@ -1,0 +1,45 @@
+<svg width="800" height="150" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#050505" rx="10" />
+  
+  <g transform="translate(0, 75)">
+    <!-- Node.js / React -->
+    <g transform="translate(100, 0)">
+      <circle cx="0" cy="0" r="30" fill="#111" stroke="#B9FF66" stroke-width="2"/>
+      <text x="0" y="5" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="14" fill="#fff">React</text>
+      <animateTransform attributeName="transform" type="translate" values="100,0; 100,-10; 100,0" dur="2s" repeatCount="indefinite" />
+    </g>
+    
+    <line x1="140" y1="0" x2="260" y2="0" stroke="#444" stroke-width="2" stroke-dasharray="5,5">
+      <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite" />
+    </line>
+    
+    <!-- Spring Boot -->
+    <g transform="translate(300, 0)">
+      <circle cx="0" cy="0" r="35" fill="#111" stroke="#00FF87" stroke-width="2"/>
+      <text x="0" y="5" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="14" fill="#fff">Spring Boot</text>
+      <animateTransform attributeName="transform" type="translate" values="300,0; 300,10; 300,0" dur="2.5s" repeatCount="indefinite" />
+    </g>
+
+    <line x1="350" y1="0" x2="470" y2="0" stroke="#444" stroke-width="2" stroke-dasharray="5,5">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite" />
+    </line>
+
+    <!-- PostgreSQL -->
+    <g transform="translate(520, 0)">
+      <circle cx="0" cy="0" r="30" fill="#111" stroke="#60EFFF" stroke-width="2"/>
+      <text x="0" y="5" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="14" fill="#fff">PostgreSQL</text>
+      <animateTransform attributeName="transform" type="translate" values="520,0; 520,-10; 520,0" dur="2.2s" repeatCount="indefinite" />
+    </g>
+    
+    <line x1="560" y1="0" x2="680" y2="0" stroke="#444" stroke-width="2" stroke-dasharray="5,5">
+      <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite" />
+    </line>
+
+    <!-- Python Script -->
+    <g transform="translate(720, 0)">
+      <circle cx="0" cy="0" r="30" fill="#111" stroke="#FFD43B" stroke-width="2"/>
+      <text x="0" y="5" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="14" fill="#fff">Python</text>
+      <animateTransform attributeName="transform" type="translate" values="720,0; 720,10; 720,0" dur="2.7s" repeatCount="indefinite" />
+    </g>
+  </g>
+</svg>

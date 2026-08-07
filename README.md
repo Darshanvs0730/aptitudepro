@@ -1,6 +1,10 @@
 <div align="center">
-  <img src="Pass-Apti.png" alt="AptitudePro" width="100%">
+  <img src="assets/header-animation.svg" alt="AptitudePro Animated Header" width="100%">
 </div>
+
+<p align="center">
+  <img src="assets/divider-animation.svg" alt="divider" width="100%">
+</p>
 
 ## 📖 Project Status
 
@@ -28,6 +32,10 @@ Most mock-exam platforms are either super outdated static PDF files, or require 
 
 ## 🚀 Core Features
 
+<div align="center">
+  <img src="assets/security-animation.svg" alt="Security Feature Animation" width="100%">
+</div>
+
 The platform orchestrates a robust feature set:
 1. **Smart Question System**: The database mathematically prevents duplicate questions by validating the current student's attempt-history records deep within the backend relational query layer.
 2. **Anti-Cheat Timer & Interceptor**: Built a custom browser interceptor that hooks directly into the core browser's network APIs using `useRef` to safely freeze the browser and hold progress if a user tries to close the tab or refresh.
@@ -39,6 +47,10 @@ The platform orchestrates a robust feature set:
 ---
 
 ## 💻 Tech Stack
+
+<div align="center">
+  <img src="assets/tech-stack-animation.svg" alt="Tech Stack Animation" width="100%">
+</div>
 
 - **Frontend**: React.js, React Router, custom CSS glassmorphism UI, React Three Fiber (3D Elements).
 - **Backend**: Java 17, Spring Boot, Spring Security (Stateless).
