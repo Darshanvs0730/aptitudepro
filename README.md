@@ -16,6 +16,13 @@
 
 ---
 
+## 🌐 Live Demo
+
+- **Frontend Application**: [https://aptitudepro-sigma.vercel.app](https://aptitudepro-sigma.vercel.app) *(Users visit this!)*
+- **Backend API**: [https://aptitudepro.onrender.com](https://aptitudepro.onrender.com) *(Hosted on Render)*
+- **Database**: PostgreSQL Session Pooler *(Hosted on Supabase)*
+---
+
 ## 📖 Project Overview
 
 AptitudePro is a complete, enterprise-ready web application designed to heavily prepare candidates for job interviews. Built with a modern, decoupled architecture, it offers users a timed, intelligent quiz experience that evaluates performance metrics across a live dashboard. 
@@ -113,6 +120,16 @@ npm install
 npm start
 ```
 *Expected Output: The React frontend will be available at `http://localhost:3000`.*
+
+---
+
+## ☁️ Cloud Deployment Architecture
+
+This project is built and optimized for a decoupled cloud hosting environment:
+
+1. **Vercel (Frontend)**: Automatically deploys the React client via GitHub CI/CD. Handles edge caching and 3D asset delivery.
+2. **Render (Backend)**: Runs the Spring Boot Java server inside a Docker container. Specially configured with `-Djava.net.preferIPv4Stack=true` to force IPv4 routing.
+3. **Supabase (Database)**: Cloud PostgreSQL database. The backend connects using the Supabase **Session Pooler** rather than a direct connection to seamlessly resolve IPv4/IPv6 networking limitations between Render and Supabase.
 
 ---
 
