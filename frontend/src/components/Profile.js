@@ -57,12 +57,12 @@ const Profile = () => {
       </div>
 
       <div className="profile-content">
-        <div className="profile-card card">
-          <div className="profile-badge-3d" style={{ width: '100%', height: '500px', position: 'relative', marginBottom: '2rem', marginTop: '-2rem' }}>
-             <Lanyard position={[0, -2, 22]} gravity={[0, -40, 0]} userName={currentUser.username} />
+        <div className="profile-card card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="profile-badge-3d" style={{ width: '100%', height: '320px', position: 'relative', marginBottom: '0', marginTop: '-2rem' }}>
+             <Lanyard position={[0, -0.5, 20]} gravity={[0, -40, 0]} userName={currentUser.username} />
           </div>
 
-          <div className="profile-info">
+          <div className="profile-info" style={{ width: '100%', marginTop: '0' }}>
             <div className="info-item">
               <div className="info-label">
                 <span className="info-icon">👤</span>

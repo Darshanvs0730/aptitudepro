@@ -9,6 +9,7 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -30,10 +31,13 @@ const Login = () => {
         setTimeout(() => window.location.reload(), 500);
       })
       .catch((error) => {
-        const resMessage =
-          error.response?.data?.message ||
-          error.message ||
-          'Login failed. Please try again.';
+        let resMessage = '';
+        if (error.response && error.response.status === 401) {
+          resMessage = 'Wrong credentials. Please check your username and password.';
+        } else {
+          resMessage = error.response?.data?.message || error.message || 'Login failed. Please try again.';
+        }
+        setErrorMsg(resMessage);
         showToast(resMessage, 'error');
         setLoading(false);
       });
@@ -48,6 +52,12 @@ const Login = () => {
           </div>
           <h2 className="login-title">Log in</h2>
         </div>
+        
+        {errorMsg && (
+          <div className="login-error-message" style={{ color: '#ff4d4f', background: 'rgba(255, 77, 79, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontSize: '14px', border: '1px solid rgba(255, 77, 79, 0.3)' }}>
+            {errorMsg}
+          </div>
+        )}
 
         <form className="login-form" onSubmit={handleLogin}>
           <div className="input-group">
