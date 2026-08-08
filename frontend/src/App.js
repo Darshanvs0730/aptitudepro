@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createBrowserRouter, RouterProvider, Outlet, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import GooeyNav from './components/GooeyNav';
 import Home from './components/Home';
 import Login from './components/Login';

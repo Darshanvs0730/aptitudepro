@@ -72,5 +72,6 @@ class QuestionService {
   }
 }
 
-export default new QuestionService();
+const questionServiceInstance = new QuestionService();
+export default questionServiceInstance;
 

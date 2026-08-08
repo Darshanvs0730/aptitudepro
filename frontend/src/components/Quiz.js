@@ -16,11 +16,11 @@ const Quiz = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
-  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
-  const [questionLimit, setQuestionLimit] = useState(10);
+  const questionLimit = 10;
 
   useEffect(() => {
     loadQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -36,6 +36,7 @@ const Quiz = () => {
       }, 1000);
       return () => clearInterval(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showScore, timeLeft]);
 
   // Determine if the user is in the middle of taking a quiz
@@ -83,7 +84,6 @@ const Quiz = () => {
         const shuffledQuestions = response.data.sort(() => Math.random() - 0.5);
         setQuestions(shuffledQuestions);
         setLoading(false);
-        setQuestionStartTime(Date.now());
         showToast('Quiz loaded successfully!', 'success');
       })
       .catch((error) => {
@@ -142,7 +142,6 @@ const Quiz = () => {
       setCurrentQuestionIndex(nextQuestion);
       setIsAnswered(false);
       setSelectedOption(null);
-      setQuestionStartTime(Date.now());
     } else {
       finishQuiz();
     }
